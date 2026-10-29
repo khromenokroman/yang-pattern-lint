@@ -11,6 +11,8 @@
 #include <string_view>
 #include <vector>
 
+#include "checks.hpp"
+#include "diagnostic.hpp"
 #include "options.hpp"
 #include "yang.hpp"
 
@@ -86,9 +88,16 @@ int main(int argc, char **argv) {
             ++errors;
             continue;
         }
-        if (options.dump) {
-            for (auto const &p : patterns) {
+        for (auto const &p : patterns) {
+            if (options.dump) {
                 std::cout << file.string() << ':' << p.line << ':' << p.column << ": " << printable(p.value) << '\n';
+                continue;
+            }
+            for (auto const &d : check_pattern(file.string(), p)) {
+                std::cout << format_diagnostic(d) << '\n';
+                if (d.severity == Diagnostic::Severity::ERROR) {
+                    ++errors;
+                }
             }
         }
     }

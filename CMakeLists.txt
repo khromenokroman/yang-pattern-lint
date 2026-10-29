@@ -33,7 +33,10 @@ include(GNUInstallDirs)
 configure_file(Version.in Version @ONLY)
 
 add_library(${PROJECT_NAME}-core STATIC
+        src/checks.cpp
+        src/diagnostic.cpp
         src/options.cpp
+        src/xsd.cpp
         src/yang.cpp
 )
 target_include_directories(${PROJECT_NAME}-core PUBLIC src)
@@ -54,7 +57,9 @@ if (BUILD_TESTS)
     enable_testing()
     find_package(GTest REQUIRED)
     add_executable(${PROJECT_NAME}-tests
+            tests/checks_test.cpp
             tests/options_test.cpp
+            tests/xsd_test.cpp
             tests/yang_test.cpp
     )
     target_link_libraries(${PROJECT_NAME}-tests PRIVATE ${PROJECT_NAME}-core GTest::gtest_main GTest::gmock)
