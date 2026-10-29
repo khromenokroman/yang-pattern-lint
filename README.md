@@ -70,7 +70,8 @@ models/example.yang:12:15: [a-z][a-z0-9-]*
 
 Пакеты для Debian 12 и 13 публикуются на странице
 [Releases](https://github.com/khromenokroman/yang-pattern-lint/releases). clixon и cligen в пакет
-не входят и ставятся отдельно (см. «Зависимости»), libxml2 и libyang подтянет apt:
+не входят и ставятся отдельно (см. «Зависимости»), libxml2 и libyang подтянет apt. Пакет
+ставится только на свою версию Debian: libyang в Debian 12 и 13 разная (`libyang.so.2` и `libyang.so.3`).
 
 ```sh
 wget https://github.com/khromenokroman/yang-pattern-lint/releases/download/v0.6.0.0/yang-pattern-lint_0.6.0.0_amd64-debian13.deb
@@ -93,14 +94,18 @@ sudo apt install ./yang-pattern-lint_0.6.0.0_amd64-debian13.deb
 ## Сборка
 
 ```sh
-sudo apt install build-essential cmake flex bison pkg-config libssl-dev libfmt-dev libxml2-dev libyang2-dev libgtest-dev libgmock-dev
+# Debian 12 и Astra: libyang2-dev, Debian 13: libyang-dev
+LIBYANG_DEV=libyang2-dev
+sudo apt install build-essential cmake flex bison pkg-config libssl-dev libfmt-dev libxml2-dev $LIBYANG_DEV libgtest-dev libgmock-dev
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ctest --test-dir build
 ```
 
-Пакет DEB: `cd build && cpack -G DEB`. Зависимость от libclixon в пакет не прописывается,
-clixon должен быть установлен отдельно.
+Пакет DEB: `cd build && cpack -G DEB`. Зависимости считает `dpkg-shlibdeps` по собранному
+бинарнику, поэтому пакет годится только для той системы, где собран: в Debian 12 и Astra он
+требует `libyang2` (`libyang.so.2`), в Debian 13 `libyang3` (`libyang.so.3`). Зависимость от
+libclixon и libcligen в пакет не прописывается, они должны быть установлены отдельно.
 
 ## Использование
 
