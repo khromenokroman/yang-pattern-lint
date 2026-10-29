@@ -11,6 +11,8 @@ option(BUILD_TESTS "Собирать тесты" ON)
 
 find_package(fmt REQUIRED)
 find_package(LibXml2 REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBYANG REQUIRED IMPORTED_TARGET libyang>=2.1)
 
 # clixon и cligen не дают cmake-конфигов и pkg-config, ищем библиотеки напрямую
 find_library(CLIXON_LIBRARY NAMES clixon REQUIRED)
@@ -35,17 +37,21 @@ configure_file(Version.in Version @ONLY)
 
 add_library(${PROJECT_NAME}-core STATIC
         src/checks.cpp
+        src/compare.cpp
         src/diagnostic.cpp
         src/options.cpp
         src/posix.cpp
+        src/sampler.cpp
         src/xsd.cpp
         src/yang.cpp
+        src/yang_regex.cpp
 )
 target_include_directories(${PROJECT_NAME}-core PUBLIC src)
 target_compile_definitions(${PROJECT_NAME}-core PUBLIC YANG_PATTERN_LINT_VERSION="${PROJECT_VERSION}")
 target_link_libraries(${PROJECT_NAME}-core PUBLIC
         fmt::fmt-header-only
         LibXml2::LibXml2
+        PkgConfig::LIBYANG
         ${CLIXON_LIBRARY}
         ${CLIGEN_LIBRARY}
 )
@@ -60,9 +66,12 @@ if (BUILD_TESTS)
     find_package(GTest REQUIRED)
     add_executable(${PROJECT_NAME}-tests
             tests/checks_test.cpp
+            tests/compare_test.cpp
             tests/options_test.cpp
             tests/posix_test.cpp
+            tests/sampler_test.cpp
             tests/xsd_test.cpp
+            tests/yang_regex_test.cpp
             tests/yang_test.cpp
     )
     target_link_libraries(${PROJECT_NAME}-tests PRIVATE ${PROJECT_NAME}-core GTest::gtest_main GTest::gmock)
@@ -93,7 +102,7 @@ set(CPACK_DEBIAN_PACKAGE_SECTION "devel")
 set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
 # libclixon обычно собран из исходников и не принадлежит пакету, dpkg-shlibdeps его не найдёт
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS OFF)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2, libc6")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2, libyang2 | libyang3, libc6")
 set(CPACK_INSTALL_DEFAULT_DIRECTORY_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
 include(CPack)

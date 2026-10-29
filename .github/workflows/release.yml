@@ -22,8 +22,10 @@ jobs:
         include:
           - distro: debian12
             image: debian:bookworm
+            libyang: libyang2-dev
           - distro: debian13
             image: debian:trixie
+            libyang: libyang-dev
 
     steps:
       - name: Install dependencies
@@ -31,7 +33,8 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends \
             ca-certificates git build-essential cmake dpkg-dev file \
-            flex bison libssl-dev libfmt-dev libxml2-dev libgtest-dev libgmock-dev
+            flex bison pkg-config libssl-dev libfmt-dev libxml2-dev ${{ matrix.libyang }} \
+            libgtest-dev libgmock-dev
 
       - name: Build cligen and clixon
         run: |
