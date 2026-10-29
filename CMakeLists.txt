@@ -102,9 +102,18 @@ set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${CPACK_PACKAGE_CONTACT}")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_PACKAGE_SECTION "devel")
 set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
-# libclixon обычно собран из исходников и не принадлежит пакету, dpkg-shlibdeps его не найдёт
-set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS OFF)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2, libyang2 | libyang3, libc6")
+# Зависимости считает dpkg-shlibdeps по бинарнику: libyang.so.2 (Debian 12, Astra) и libyang.so.3 (Debian 13)
+# дают разные пакеты. libclixon и libcligen собраны из исходников и не принадлежат пакету,
+# их каталог передаётся как приватный, чтобы dpkg-shlibdeps их пропустил.
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+get_filename_component(CLIXON_LIBRARY_DIR "${CLIXON_LIBRARY}" REALPATH)
+get_filename_component(CLIXON_LIBRARY_DIR "${CLIXON_LIBRARY_DIR}" DIRECTORY)
+get_filename_component(CLIGEN_LIBRARY_DIR "${CLIGEN_LIBRARY}" REALPATH)
+get_filename_component(CLIGEN_LIBRARY_DIR "${CLIGEN_LIBRARY_DIR}" DIRECTORY)
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS_PRIVATE_DIRS "${CLIXON_LIBRARY_DIR};${CLIGEN_LIBRARY_DIR}")
+# в Astra у пакета libyang2 нет shlibs, dpkg-shlibdeps его не выводит; пакет назван по мажору soname
+string(REGEX MATCH "^[0-9]+" LIBYANG_VERSION_MAJOR "${LIBYANG_VERSION}")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libyang${LIBYANG_VERSION_MAJOR} (>= 2.1)")
 set(CPACK_INSTALL_DEFAULT_DIRECTORY_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
 include(CPack)
