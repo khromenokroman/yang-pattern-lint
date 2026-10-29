@@ -42,6 +42,7 @@ add_library(${PROJECT_NAME}-core STATIC
         src/options.cpp
         src/posix.cpp
         src/sampler.cpp
+        src/suppress.cpp
         src/xsd.cpp
         src/yang.cpp
         src/yang_regex.cpp
@@ -70,6 +71,7 @@ if (BUILD_TESTS)
             tests/options_test.cpp
             tests/posix_test.cpp
             tests/sampler_test.cpp
+            tests/suppress_test.cpp
             tests/xsd_test.cpp
             tests/yang_regex_test.cpp
             tests/yang_test.cpp

@@ -3,7 +3,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
+#include <string>
 
 #include "checks.hpp"
 
@@ -63,10 +65,10 @@ TEST(Compare, CaretDollarAreAnchorsInCli) {
 TEST(Compare, CheckRule) {
     Pattern const p{"^a$", "'^a$'", 2, 9};
     auto const findings = check_pattern("m.yang", p);
-    ASSERT_EQ(findings.size(), 1U);
-    EXPECT_EQ(findings[0].rule, "mismatch");
-    EXPECT_THAT(findings[0].message, testing::HasSubstr("'^a$' по XSD подходит, CLI отклоняет"));
-    EXPECT_THAT(findings[0].message, testing::HasSubstr("'a' по XSD не подходит, CLI принимает"));
+    auto const it = std::ranges::find(findings, std::string("mismatch"), &Diagnostic::rule);
+    ASSERT_NE(it, findings.end()) << "ожидалась находка mismatch";
+    EXPECT_THAT(it->message, testing::HasSubstr("'^a$' по XSD подходит, CLI отклоняет"));
+    EXPECT_THAT(it->message, testing::HasSubstr("'a' по XSD не подходит, CLI принимает"));
 }
 
 /**

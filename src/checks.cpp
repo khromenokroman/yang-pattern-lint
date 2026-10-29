@@ -4,6 +4,7 @@
 #include <fmt/ranges.h>
 
 #include <optional>
+#include <string_view>
 
 #include "compare.hpp"
 #include "posix.hpp"
@@ -31,10 +32,55 @@ std::string quoted(std::string const &value) {
     return out + "'";
 }
 
+/**
+ * @brief Предупреждения по записи паттерна, не зависящие от движков.
+ */
+void style_warnings(std::string const &file, Pattern const &pattern, std::vector<Diagnostic> &out) {
+    auto warn = [&](char const *rule, std::string message) {
+        out.push_back({file, rule, std::move(message), pattern.line, pattern.column, Diagnostic::Severity::WARNING});
+    };
+    auto const &v = pattern.value;
+    if (v.find("\\\\") != std::string::npos) {
+        warn("escaped-backslash",
+             "в паттерне \\\\ (буквальный обратный слеш): инструменты, переписывающие кавычки "
+             "YANG ('...' в \"...\"), часто превращают его в \\ и меняют смысл регулярки");
+    }
+    bool const caret = !v.empty() && v.front() == '^';
+    bool const dollar = v.size() > 1 && v.back() == '$' && v[v.size() - 2] != '\\';
+    if (caret || dollar) {
+        warn("anchors", fmt::format("паттерн {}: в XSD ^ и $ обычные символы, а не якоря; паттерн и так сопоставляется "
+                                    "со всей строкой, а CLI clixon считает их якорями",
+                                    caret && dollar ? "начинается с ^ и кончается на $"
+                                    : caret         ? "начинается с ^"
+                                                    : "кончается на $"));
+    }
+    // неизвестный escape в двойных кавычках: в YANG 1.1 ошибка, в YANG 1.0 остаётся как есть
+    char quote = 0;
+    for (std::size_t i = 0; i < pattern.literal.size(); ++i) {
+        char const c = pattern.literal[i];
+        if (quote == 0) {
+            if (c == '\'' || c == '"') {
+                quote = c;
+            }
+        } else if (c == quote) {
+            quote = 0;
+        } else if (quote == '"' && c == '\\' && i + 1 < pattern.literal.size()) {
+            char const e = pattern.literal[++i];
+            if (std::string_view("ntr\"\\").find(e) == std::string_view::npos) {
+                warn("escape", fmt::format("\\{} в двойных кавычках: в YANG 1.1 это ошибка, YANG 1.0 оставляет как есть; "
+                                           "запишите паттерн в одинарных кавычках или удвойте обратный слеш",
+                                           e));
+                break;
+            }
+        }
+    }
+}
+
 } // namespace
 
 std::vector<Diagnostic> check_pattern(std::string const &file, Pattern const &pattern) {
     std::vector<Diagnostic> out;
+    style_warnings(file, pattern, out);
     try {
         XsdRegex const regex{pattern.value};
     } catch (XsdError const &e) {

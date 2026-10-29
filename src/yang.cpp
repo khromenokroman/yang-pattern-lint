@@ -266,6 +266,7 @@ std::vector<Pattern> extract_patterns(std::string_view text) {
             if (!pattern) {
                 throw ParseError("у pattern нет аргумента", keyword.line, keyword.column);
             }
+            pattern->keyword_line = keyword.line;
             patterns.push_back(std::move(*pattern));
             expect_keyword = false;
             continue;

@@ -57,3 +57,16 @@ TEST(Options, UnknownKey) {
         EXPECT_THAT(e.what(), testing::HasSubstr("--strict")) << "в ошибке должно быть имя ключа";
     }
 }
+
+/**
+ * --disable можно повторять, у --ignore-file обязательное значение.
+ */
+TEST(Options, DisableAndIgnoreFile) {
+    std::array<std::string_view, 6> const args{"--disable", "anchors,escape", "--disable", "mismatch", "--ignore-file", "x.ignore"};
+    auto const options = parse_options(args);
+    EXPECT_THAT(options.disabled, testing::ElementsAre("anchors,escape", "mismatch"));
+    EXPECT_EQ(options.ignore_file, "x.ignore");
+
+    std::array<std::string_view, 1> const missing{"--ignore-file"};
+    EXPECT_THROW((void)parse_options(missing), std::invalid_argument) << "--ignore-file без значения";
+}

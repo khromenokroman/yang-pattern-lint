@@ -14,6 +14,7 @@
 #include "checks.hpp"
 #include "diagnostic.hpp"
 #include "options.hpp"
+#include "suppress.hpp"
 #include "yang.hpp"
 
 namespace {
@@ -67,8 +68,19 @@ int main(int argc, char **argv) {
     }
 
     std::vector<std::filesystem::path> files;
+    Suppressions suppressions;
     try {
         files = collect_yang_files(options.paths);
+        for (auto const &rules : options.disabled) {
+            suppressions.disabled.merge(split_rules(rules));
+        }
+        auto ignore_file = options.ignore_file;
+        if (ignore_file.empty() && std::filesystem::exists(DEFAULT_IGNORE_FILE)) {
+            ignore_file = DEFAULT_IGNORE_FILE;
+        }
+        if (!ignore_file.empty()) {
+            suppressions.entries = parse_ignore_file(read_file(ignore_file));
+        }
     } catch (std::exception const &e) {
         std::cerr << "yang-pattern-lint: " << e.what() << '\n';
         return EXIT_USAGE;
@@ -77,8 +89,10 @@ int main(int argc, char **argv) {
     int errors = 0;
     for (auto const &file : files) {
         std::vector<Pattern> patterns;
+        std::string text;
         try {
-            patterns = extract_patterns(read_file(file));
+            text = read_file(file);
+            patterns = extract_patterns(text);
         } catch (ParseError const &e) {
             std::cout << file.string() << ':' << e.line() << ':' << e.column() << ": ошибка разбора: " << e.what() << '\n';
             ++errors;
@@ -88,12 +102,21 @@ int main(int argc, char **argv) {
             ++errors;
             continue;
         }
+        std::vector<std::string_view> lines;
+        for (std::string_view rest = text; !rest.empty();) {
+            auto const end = rest.find('\n');
+            lines.push_back(rest.substr(0, end));
+            rest = end == std::string_view::npos ? std::string_view{} : rest.substr(end + 1);
+        }
         for (auto const &p : patterns) {
             if (options.dump) {
                 std::cout << file.string() << ':' << p.line << ':' << p.column << ": " << printable(p.value) << '\n';
                 continue;
             }
             for (auto const &d : check_pattern(file.string(), p)) {
+                if (is_suppressed(suppressions, d, p, lines)) {
+                    continue;
+                }
                 std::cout << format_diagnostic(d) << '\n';
                 if (d.severity == Diagnostic::Severity::ERROR) {
                     ++errors;
