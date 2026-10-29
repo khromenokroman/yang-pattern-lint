@@ -66,6 +66,17 @@ $ yang-pattern-lint --dump models/
 models/example.yang:12:15: [a-z][a-z0-9-]*
 ```
 
+## Установка
+
+Пакеты для Debian 12 и 13 публикуются на странице
+[Releases](https://github.com/khromenokroman/yang-pattern-lint/releases). clixon и cligen в пакет
+не входят и ставятся отдельно (см. «Зависимости»), libxml2 и libyang подтянет apt:
+
+```sh
+wget https://github.com/khromenokroman/yang-pattern-lint/releases/download/v0.6.0.0/yang-pattern-lint_0.6.0.0_amd64-debian13.deb
+sudo apt install ./yang-pattern-lint_0.6.0.0_amd64-debian13.deb
+```
+
 ## Зависимости
 
 - **libclixon** и **libcligen** >= 7.0: используется функция `regexp_xsd2posix`, чтобы перевод
@@ -128,6 +139,23 @@ yang-pattern-lint [ключи] [ФАЙЛ.yang | КАТАЛОГ]...
   ```
 
 Предупреждения на код возврата не влияют, 1 возвращается только при ошибках.
+
+## Релиз
+
+Релиз собирает и публикует CI (`.github/workflows/release.yml`) по тегу `vВЕРСИЯ`.
+
+1. Изменения слиты в `master`, CI на `master` зелёный.
+2. Версия в `CMakeLists.txt` продвинута коммитом `build: Версия X.Y.Z.W`.
+3. Поставить аннотированный тег на этот коммит и отправить его:
+
+   ```sh
+   git checkout master && git pull --ff-only
+   git tag -a vX.Y.Z.W -m "yang-pattern-lint X.Y.Z.W"
+   git push origin vX.Y.Z.W
+   ```
+
+4. CI по тегу проверяет, что тег совпадает с версией в `CMakeLists.txt`, собирает cligen и clixon,
+   проект и тесты, собирает DEB для Debian 12 и 13 и публикует релиз с пакетами.
 
 ## Лицензия
 
