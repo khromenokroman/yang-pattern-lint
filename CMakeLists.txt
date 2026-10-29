@@ -21,11 +21,12 @@ include(CheckCXXSourceCompiles)
 set(CMAKE_REQUIRED_LIBRARIES ${CLIXON_LIBRARY} ${CLIGEN_LIBRARY})
 check_cxx_source_compiles("
 extern \"C\" int regexp_xsd2posix(char const *xsd, char **posix);
-int main() { char *p = nullptr; return regexp_xsd2posix(\"a\", &p); }
+extern \"C\" int cligen_regex_posix_compile(char const *regexp, void **recomp);
+int main() { char *p = nullptr; void *r = nullptr; return regexp_xsd2posix(\"a\", &p) + cligen_regex_posix_compile(\"a\", &r); }
 " HAVE_REGEXP_XSD2POSIX)
 unset(CMAKE_REQUIRED_LIBRARIES)
 if (NOT HAVE_REGEXP_XSD2POSIX)
-    message(FATAL_ERROR "в ${CLIXON_LIBRARY} нет regexp_xsd2posix, нужен clixon >= 7.0")
+    message(FATAL_ERROR "нет regexp_xsd2posix (libclixon) или cligen_regex_posix_compile (libcligen), нужны clixon и cligen >= 7.0")
 endif ()
 
 include(GNUInstallDirs)
@@ -36,6 +37,7 @@ add_library(${PROJECT_NAME}-core STATIC
         src/checks.cpp
         src/diagnostic.cpp
         src/options.cpp
+        src/posix.cpp
         src/xsd.cpp
         src/yang.cpp
 )
@@ -59,6 +61,7 @@ if (BUILD_TESTS)
     add_executable(${PROJECT_NAME}-tests
             tests/checks_test.cpp
             tests/options_test.cpp
+            tests/posix_test.cpp
             tests/xsd_test.cpp
             tests/yang_test.cpp
     )
