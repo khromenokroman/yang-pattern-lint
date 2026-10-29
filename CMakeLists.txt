@@ -34,6 +34,7 @@ configure_file(Version.in Version @ONLY)
 
 add_library(${PROJECT_NAME}-core STATIC
         src/options.cpp
+        src/yang.cpp
 )
 target_include_directories(${PROJECT_NAME}-core PUBLIC src)
 target_compile_definitions(${PROJECT_NAME}-core PUBLIC YANG_PATTERN_LINT_VERSION="${PROJECT_VERSION}")
@@ -54,6 +55,7 @@ if (BUILD_TESTS)
     find_package(GTest REQUIRED)
     add_executable(${PROJECT_NAME}-tests
             tests/options_test.cpp
+            tests/yang_test.cpp
     )
     target_link_libraries(${PROJECT_NAME}-tests PRIVATE ${PROJECT_NAME}-core GTest::gtest_main GTest::gmock)
     include(GoogleTest)
