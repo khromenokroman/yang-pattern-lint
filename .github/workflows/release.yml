@@ -31,7 +31,7 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends \
             ca-certificates git build-essential cmake dpkg-dev file \
-            flex bison libfmt-dev libxml2-dev libgtest-dev libgmock-dev
+            flex bison libssl-dev libfmt-dev libxml2-dev libgtest-dev libgmock-dev
 
       - name: Build cligen and clixon
         run: |

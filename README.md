@@ -27,7 +27,7 @@ YANG задаёт `pattern` в синтаксисе регулярных выр�
 ## Сборка
 
 ```sh
-sudo apt install build-essential cmake flex bison libfmt-dev libxml2-dev libgtest-dev libgmock-dev
+sudo apt install build-essential cmake flex bison libssl-dev libfmt-dev libxml2-dev libgtest-dev libgmock-dev
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ctest --test-dir build
